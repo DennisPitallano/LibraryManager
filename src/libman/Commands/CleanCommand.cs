@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -14,6 +15,7 @@ namespace Microsoft.Web.LibraryManager.Tools.Commands
     /// </summary>
     internal class CleanCommand : BaseCommand
     {
+        private int _totalFilesCleaned = 0;
         public CleanCommand(IHostEnvironment hostEnvironment, bool throwOnUnexpectedArg = true)
             : base(throwOnUnexpectedArg, "clean", Resources.CleanCommandDesc, hostEnvironment)
         {
@@ -25,7 +27,11 @@ namespace Microsoft.Web.LibraryManager.Tools.Commands
         {
             Manifest manifest = await GetManifestAsync();
 
-            Task<bool> deleteFileAction(IEnumerable<string> s) => HostInteractions.DeleteFilesAsync(s, CancellationToken.None);
+            Task<bool> deleteFileAction(IEnumerable<string> s)
+            {
+                _totalFilesCleaned +=  s!= null ? s.Count() : 0;
+                return HostInteractions.DeleteFilesAsync(s, CancellationToken.None);
+            }
 
             IEnumerable<ILibraryOperationResult> result = await manifest.CleanAsync(deleteFileAction, CancellationToken.None);
 
@@ -34,6 +40,10 @@ namespace Microsoft.Web.LibraryManager.Tools.Commands
             if (failures.Any())
             {
                 Logger.Log(Resources.CleanFailed, LogLevel.Error);
+            }
+            else
+            {
+                Logger.Log(string.Format(Resources.CleanedFilesMessage, _totalFilesCleaned), LogLevel.Operation);
             }
 
             return 0;

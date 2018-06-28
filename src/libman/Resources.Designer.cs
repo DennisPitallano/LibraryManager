@@ -187,6 +187,15 @@ namespace Microsoft.Web.LibraryManager.Tools {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} files deleted.
+        /// </summary>
+        internal static string CleanedFilesMessage {
+            get {
+                return ResourceManager.GetString("CleanedFilesMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to clean some files..
         /// </summary>
         internal static string CleanFailed {
