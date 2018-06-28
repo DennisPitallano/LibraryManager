@@ -333,13 +333,42 @@ namespace Microsoft.Web.LibraryManager.Vsix.UI.Models
 
         private bool CanInstallPackage()
         {
-            if (_isInstalling)
+            if (_isInstalling || HasErrors())
             {
                 return false;
             }
 
             AnyFileSelected = IsAnyFileSelected(DisplayRoots);
             return AnyFileSelected;
+        }
+
+        private bool HasErrors()
+        {
+            if (SelectedPackage == null)
+            {
+                return false;
+            }
+
+            RefreshFileSelections();
+
+            LibraryInstallationState libraryInstallationState = new LibraryInstallationState
+            {
+                LibraryId = PackageId,
+                ProviderId = SelectedPackage.ProviderId,
+                DestinationPath = InstallationFolder.DestinationFolder,
+                Files = SelectedFiles.ToList()
+            };
+
+
+            IList<IError> errors = new List<IError>();
+
+            Shell.ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                ILibraryOperationResult libraryOperationResult = await libraryInstallationState.IsValidAsync(SelectedProvider).ConfigureAwait(false);
+                errors = libraryOperationResult.Errors;
+            });
+
+            return errors.Count > 0;
         }
 
         private static bool IsAnyFileSelected(IReadOnlyList<PackageItem> children)
